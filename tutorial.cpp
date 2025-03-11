@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdlib>
+#include <vector>
 
 using namespace std; // to avoid std::cout everytime
 /*******************************************************************************************************************
@@ -101,6 +102,44 @@ public:
     }
 };
 
+/*******************************************************************************************************************
+MEMORY POOL ALLOCATOR
+*******************************************************************************************************************/
+class MemoryPool
+{
+private:
+    vector<void *> pool;
+
+public:
+    MemoryPool(size_t size)
+    {
+        for (size_t i = 0; i < size; ++i)
+        {
+            pool.push_back(malloc(32));
+        }
+    }
+
+    void *allocate()
+    {
+        if (pool.empty())
+            return malloc(32);
+        void *block = pool.back();
+        pool.pop_back();
+        return block;
+    }
+
+    void deallocate(void *block)
+    {
+        pool.push_back(block);
+    }
+
+    ~MemoryPool()
+    {
+        for (void *block : pool)
+            free(block);
+    }
+};
+
 int main()
 {
     // hello_world();
@@ -110,15 +149,20 @@ int main()
     // Test *obj = new Test();
     // delete obj;
 
-    DynamicArray arr;
-    arr.push_back(4);
-    arr.push_back(5);
-    arr.push_back(6);
+    // DynamicArray arr;
+    // arr.push_back(4);
+    // arr.push_back(5);
+    // arr.push_back(6);
+    // for (size_t i = 0; i < 3; i++)
+    // {
+    //     cout << "Element " << i << " is " << arr[i] << endl;
+    // }
 
-    for (size_t i = 0; i < 3; i++)
-    {
-        cout << "Element " << i << " is " << arr[i] << endl;
-    }
+    MemoryPool pool(1);
+    int *a = (int *)pool.allocate();
+    *a = 42;
+    cout << "Value: " << *a << endl;
+    pool.deallocate(a);
 
     return 0;
 }
