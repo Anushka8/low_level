@@ -140,6 +140,61 @@ public:
     }
 };
 
+/*******************************************************************************************************************
+GARBAGE COLLECTOR
+*******************************************************************************************************************/
+// helper class to track how many SmartPointers point to the same uderlying resource
+class RefCounter
+{
+private:
+    int count;
+
+public:
+    RefCounter() : count(1) {}
+    void addRef() { ++count; }        // called when a new SmartPointer shares ownership of the resource
+    int release() { return --count; } // called when a SmartPointer goes out of scope
+};
+
+// make SmartPointer a template class which can take any type T
+template <typename T>
+class SmartPointer
+{
+private:
+    T *ptr;          // raw pointer to the resource T
+    RefCounter *ref; // pointer to reference counter (object that tracks how many SmartPointers share the ptr)
+
+public:
+    // takes a raw pointer ans initlizes the ref counter to 1
+    SmartPointer(T *p) : ptr(p), ref(new RefCounter) {}
+
+    // invoked when you copy or assign from existing SmartPointer
+    SmartPointer(const SmartPointer &sp)
+    {
+        ptr = sp.ptr;
+        ref = sp.ref;
+        ref->addRef();
+    }
+
+    ~SmartPointer()
+    {
+        if (ref->release() == 0)
+        {
+            delete ptr;
+            delete ref;
+        }
+    }
+
+    // dereference operators
+    T &operator*() { return *ptr; } // returns reference to the pointed object
+    T *operator->() { return ptr; } // returns raw pointer
+};
+
+class forSP
+{
+public:
+    void show() { std::cout << "Test object\n"; }
+};
+
 int main()
 {
     // hello_world();
@@ -158,11 +213,17 @@ int main()
     //     cout << "Element " << i << " is " << arr[i] << endl;
     // }
 
-    MemoryPool pool(1);
-    int *a = (int *)pool.allocate();
-    *a = 42;
-    cout << "Value: " << *a << endl;
-    pool.deallocate(a);
+    // MemoryPool pool(1);
+    // int *a = (int *)pool.allocate();
+    // *a = 42;
+    // cout << "Value: " << *a << endl;
+    // pool.deallocate(a);
+
+    SmartPointer<forSP> sp1(new forSP());
+    {
+        SmartPointer<forSP> sp2 = sp1;
+        sp2->show();
+    }
 
     return 0;
 }
