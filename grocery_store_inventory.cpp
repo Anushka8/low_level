@@ -35,11 +35,24 @@ public:
     {
         // create a new item
         GroceryItem *newItem = new GroceryItem(name, price, quantity);
-        // set next to prev (current head)
-        newItem->next = head;
-        // set new item to head
-        head = newItem;
-        cout << "Added: " << name << "(Quantity: " << quantity << ", Price: $" << price << endl;
+
+        if (!head || newItem->price < head->price)
+        {
+            newItem->next = head;
+            head = newItem;
+        }
+        else
+        {
+            GroceryItem *curr = head;
+            while (curr->next && curr->next->price < newItem->price)
+            {
+                curr = curr->next;
+            }
+            newItem->next = curr->next;
+            curr->next = newItem;
+        }
+
+        cout << "Added: " << name << "(Quantity: " << quantity << ", Price: $" << price << ")" << endl;
     }
 
     void removeItem(string name)
@@ -81,7 +94,7 @@ public:
 
         while (temp)
         {
-            cout << temp->name << "(Quantity: " << temp->quantity << ", Price: $" << temp->price << endl;
+            cout << temp->name << "(Quantity: " << temp->quantity << ", Price: $" << temp->price << ")" << endl;
             temp = temp->next;
         }
     }
@@ -103,8 +116,9 @@ int main()
     Inventory store;
 
     store.addItem("Apples", 1.5, 50);
-    store.addItem("Bananas", 0.8, 100);
     store.addItem("Milk", 3.2, 30);
+    store.addItem("Bananas", 0.8, 100);
+    store.addItem("Grapes", 1.4, 40);
 
     store.displayItems();
 
